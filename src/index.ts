@@ -1,39 +1,33 @@
 import { MongoClient } from "mongodb";
-
-const express = require('express');
-const body = require('body-parser');
+import Movie from './routes/Movie'; // Adjust the path as necessary
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors'; // Import the cors package
 
 async function start() {
-  try{
-
+  try {
     const app = express();
 
-    const mongo = await MongoClient.connect('mongodb://localhost:27017/crm_api'); 
+    // Enable CORS for all routes
+    app.use(cors());
 
-    await mongo.connect();
-
+    const mongo = await MongoClient.connect('mongodb://localhost:27017/movies'); 
     app.db = mongo.db();
 
-    //body parser
+    // Body parser middleware
+    app.use(bodyParser.json({ limit: '5mb' }));
 
-    app.use(body.json({
-      limit: '5mb'
-    }));
+    // Routes
+    app.use('/api/movies', Movie); // Use the movies router
 
-    //routes
-
-    app.use('/',require('./'));
-
-    //start sever
-
-    app.listen(2000, () =>{
-      console.log('server running on port 2000');
+    // Start server
+    app.listen(2000, () => {
+      console.log('Server running on port 2000');
     });
 
-  }
-  catch(error){
-    console.log(error);
+  } catch (error) {
+    console.error(error);
   }
 }
 
-start()
+start();
