@@ -10,6 +10,7 @@ import searchRoutes from "./routes/search.route.js";
 import { ENV_VARS } from "./config/envVars.js";
 import { connectDB } from "./config/db.js";
 import { protectRoute } from "./middleware/protectRoute.js";
+import { setupSwagger } from "./config/swagger.js";
 
 const app = express();
 
@@ -32,7 +33,10 @@ if (ENV_VARS.NODE_ENV === "production") {
 	});
 }
 
+setupSwagger(app);
+
 app.listen(PORT, () => {
 	console.log("Server started at http://localhost:" + PORT);
+	console.log("Swagger API documentation available at: http://localhost:" + PORT + "/api-docs");
 	connectDB();
 });

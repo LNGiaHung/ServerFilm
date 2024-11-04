@@ -1,6 +1,27 @@
 import { User } from "../models/user.model.js";
 import { fetchFromTMDB } from "../services/tmdb.service.js";
 
+/**
+ * @swagger
+ * /search/person/{query}:
+ *   get:
+ *     summary: Search for a person
+ *     tags: [Search]
+ *     parameters:
+ *       - in: path
+ *         name: query
+ *         required: true
+ *         description: The search query for the person
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved search results
+ *       404:
+ *         description: No results found
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function searchPerson(req, res) {
 	const { query } = req.params;
 	try {
@@ -31,6 +52,27 @@ export async function searchPerson(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /search/movie/{query}:
+ *   get:
+ *     summary: Search for a movie
+ *     tags: [Search]
+ *     parameters:
+ *       - in: path
+ *         name: query
+ *         required: true
+ *         description: The search query for the movie
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved search results
+ *       404:
+ *         description: No results found
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function searchMovie(req, res) {
 	const { query } = req.params;
 
@@ -61,6 +103,27 @@ export async function searchMovie(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /search/tv/{query}:
+ *   get:
+ *     summary: Search for a TV show
+ *     tags: [Search]
+ *     parameters:
+ *       - in: path
+ *         name: query
+ *         required: true
+ *         description: The search query for the TV show
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved search results
+ *       404:
+ *         description: No results found
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function searchTv(req, res) {
 	const { query } = req.params;
 
@@ -91,6 +154,18 @@ export async function searchTv(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /search/history:
+ *   get:
+ *     summary: Get search history for the authenticated user
+ *     tags: [Search]
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved search history
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getSearchHistory(req, res) {
 	try {
 		res.status(200).json({ success: true, content: req.user.searchHistory });
@@ -99,6 +174,25 @@ export async function getSearchHistory(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /search/history/{id}:
+ *   delete:
+ *     summary: Remove an item from search history
+ *     tags: [Search]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the item to remove
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Successfully removed item from search history
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function removeItemFromSearchHistory(req, res) {
 	let { id } = req.params;
 

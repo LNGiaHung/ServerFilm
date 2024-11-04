@@ -1,5 +1,17 @@
 import { fetchFromTMDB } from "../services/tmdb.service.js";
 
+/**
+ * @swagger
+ * /movie/trending:
+ *   get:
+ *     summary: Get trending movies
+ *     tags: [Movie]
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved trending movies
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getTrendingMovie(req, res) {
 	try {
 		const data = await fetchFromTMDB("https://api.themoviedb.org/3/trending/movie/day?language=en-US");
@@ -11,6 +23,27 @@ export async function getTrendingMovie(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /movie/{id}/videos:
+ *   get:
+ *     summary: Get trailers for a specific movie
+ *     tags: [Movie]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the movie
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved trailers
+ *       404:
+ *         description: Movie not found
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getMovieTrailers(req, res) {
 	const { id } = req.params;
 	try {
@@ -25,6 +58,27 @@ export async function getMovieTrailers(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /movie/{id}:
+ *   get:
+ *     summary: Get details for a specific movie
+ *     tags: [Movie]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the movie
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved movie details
+ *       404:
+ *         description: Movie not found
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getMovieDetails(req, res) {
 	const { id } = req.params;
 	try {
@@ -39,6 +93,25 @@ export async function getMovieDetails(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /movie/{id}/similar:
+ *   get:
+ *     summary: Get similar movies
+ *     tags: [Movie]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the movie
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved similar movies
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getSimilarMovies(req, res) {
 	const { id } = req.params;
 	try {
@@ -49,6 +122,25 @@ export async function getSimilarMovies(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /movie/category/{category}:
+ *   get:
+ *     summary: Get movies by category
+ *     tags: [Movie]
+ *     parameters:
+ *       - in: path
+ *         name: category
+ *         required: true
+ *         description: The category of movies
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved movies by category
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getMoviesByCategory(req, res) {
 	const { category } = req.params;
 	try {

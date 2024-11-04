@@ -1,7 +1,39 @@
 import { User } from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
-import { generateTokenAndSetCookie } from "../utils/generateToken.js";
+import { generateAccessToken, generateRefreshToken, setAccessTokenCookie } from "../utils/generateToken.js";
+import jwt from "jsonwebtoken";
+import { ENV_VARS } from "../config/envVars.js";
 
+/**
+ * @swagger
+ * /signup:
+ *   post:
+ *     summary: Sign up a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *               username:
+ *                 type: string
+ *                 example: username123
+ *     responses:
+ *       201:
+ *         description: User signed up successfully
+ *       400:
+ *         description: All fields are required or invalid input
+ *       500:
+ *         description: Internal server error
+ */
 export async function signup(req, res) {
 	try {
 		const { email, password, username } = req.body;
@@ -62,6 +94,33 @@ export async function signup(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Login a user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *     responses:
+ *       200:
+ *         description: User logged in successfully
+ *       401:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Internal server error
+ */
 export async function login(req, res) {
 	try {
 		const { email, password } = req.body;
@@ -81,7 +140,12 @@ export async function login(req, res) {
 			return res.status(400).json({ success: false, message: "Invalid credentials" });
 		}
 
-		generateTokenAndSetCookie(user._id, res);
+		const accessToken = generateAccessToken(user._id);
+		const refreshToken = generateRefreshToken(user._id);
+		user.refreshToken = refreshToken;
+		await user.save();
+
+		setAccessTokenCookie(accessToken, res);
 
 		res.status(200).json({
 			success: true,
@@ -89,6 +153,7 @@ export async function login(req, res) {
 				...user._doc,
 				password: "",
 			},
+			refreshToken,
 		});
 	} catch (error) {
 		console.log("Error in login controller", error.message);
@@ -96,6 +161,18 @@ export async function login(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /logout:
+ *   post:
+ *     summary: Logout a user
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *       500:
+ *         description: Internal server error
+ */
 export async function logout(req, res) {
 	try {
 		res.clearCookie("jwt-netflix");
@@ -106,12 +183,77 @@ export async function logout(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /auth-check:
+ *   get:
+ *     summary: Check authentication status
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: User is authenticated
+ *       500:
+ *         description: Internal server error
+ */
 export async function authCheck(req, res) {
 	try {
 		console.log("req.user:", req.user);
 		res.status(200).json({ success: true, user: req.user });
 	} catch (error) {
 		console.log("Error in authCheck controller", error.message);
+		res.status(500).json({ success: false, message: "Internal server error" });
+	}
+}
+
+/**
+ * @swagger
+ * /refresh-token:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: your_refresh_token_here
+ *     responses:
+ *       200:
+ *         description: New access token generated
+ *       401:
+ *         description: Refresh token is required
+ *       403:
+ *         description: Invalid refresh token
+ *       500:
+ *         description: Internal server error
+ */
+export async function refreshToken(req, res) {
+	try {
+		const { token } = req.body;
+
+		if (!token) {
+			return res.status(401).json({ success: false, message: "Refresh token is required" });
+		}
+
+		const decoded = jwt.verify(token, ENV_VARS.JWT_SECRET);
+		const user = await User.findById(decoded.userId);
+
+		if (!user || user.refreshToken !== token) {
+			return res.status(403).json({ success: false, message: "Invalid refresh token" });
+		}
+
+		const newAccessToken = generateAccessToken(user._id);
+
+		res.status(200).json({
+			success: true,
+			accessToken: newAccessToken,
+		});
+	} catch (error) {
+		console.log("Error in refreshToken controller", error.message);
 		res.status(500).json({ success: false, message: "Internal server error" });
 	}
 }

@@ -1,5 +1,17 @@
 import { fetchFromTMDB } from "../services/tmdb.service.js";
 
+/**
+ * @swagger
+ * /tv/trending:
+ *   get:
+ *     summary: Get trending TV shows
+ *     tags: [TV]
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved trending TV shows
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getTrendingTv(req, res) {
 	try {
 		const data = await fetchFromTMDB("https://api.themoviedb.org/3/trending/tv/day?language=en-US");
@@ -11,6 +23,27 @@ export async function getTrendingTv(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /tv/{id}/videos:
+ *   get:
+ *     summary: Get trailers for a specific TV show
+ *     tags: [TV]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the TV show
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved trailers
+ *       404:
+ *         description: TV show not found
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getTvTrailers(req, res) {
 	const { id } = req.params;
 	try {
@@ -25,6 +58,29 @@ export async function getTvTrailers(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /tv/{id}:
+ *   get:
+ *     summary: Get details for a specific TV show
+ *     tags: [TV]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the TV show
+ *         schema:
+ *           type: string
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved TV show details
+ *       404:
+ *         description: TV show not found
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getTvDetails(req, res) {
 	const { id } = req.params;
 	try {
@@ -39,6 +95,25 @@ export async function getTvDetails(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /tv/{id}/similar:
+ *   get:
+ *     summary: Get similar TV shows
+ *     tags: [TV]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the TV show
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved similar TV shows
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getSimilarTvs(req, res) {
 	const { id } = req.params;
 	try {
@@ -49,6 +124,25 @@ export async function getSimilarTvs(req, res) {
 	}
 }
 
+/**
+ * @swagger
+ * /tv/category/{category}:
+ *   get:
+ *     summary: Get TV shows by category
+ *     tags: [TV]
+ *     parameters:
+ *       - in: path
+ *         name: category
+ *         required: true
+ *         description: The category of TV shows
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved TV shows by category
+ *       500:
+ *         description: Internal Server Error
+ */
 export async function getTvsByCategory(req, res) {
 	const { category } = req.params;
 	try {
