@@ -78,8 +78,13 @@ export async function signup(req, res) {
 			image,
 		});
 
-		generateTokenAndSetCookie(newUser._id, res);
 		await newUser.save();
+		const accessToken = generateAccessToken(newUser._id);
+		const refreshToken = generateRefreshToken(newUser._id);
+		newUser.refreshToken = refreshToken;
+		await newUser.save();
+
+		setAccessTokenCookie(accessToken, res);
 
 		res.status(201).json({
 			success: true,
@@ -87,6 +92,7 @@ export async function signup(req, res) {
 				...newUser._doc,
 				password: "",
 			},
+			refreshToken,
 		});
 	} catch (error) {
 		console.log("Error in signup controller", error.message);
