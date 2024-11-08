@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import path from "path";
+import cors from "cors";
 
 import authRoutes from "./routes/auth.routes.js";
 import movieRoutes from "./routes/movie.routes.js";
@@ -14,6 +15,11 @@ import { protectRoute } from "./middleware/protectRoute.js";
 import { setupSwagger } from "./config/swagger.js";
 
 const app = express();
+
+app.use(cors({
+	origin: 'http://localhost:5173', // Replace with your frontend's origin
+	credentials: true // Allow credentials to be sent with requests
+}));
 
 const PORT = ENV_VARS.PORT;
 const __dirname = path.resolve();

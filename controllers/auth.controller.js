@@ -1,6 +1,6 @@
 import { User } from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
-import { generateAccessToken, generateRefreshToken, setAccessTokenCookie } from "../utils/generateToken.js";
+import { generateAccessToken, generateRefreshToken, setAccessTokenCookie, setRefreshTokenCookie } from "../utils/generateToken.js";
 import jwt from "jsonwebtoken";
 import { ENV_VARS } from "../config/envVars.js";
 
@@ -78,8 +78,14 @@ export async function signup(req, res) {
 			image,
 		});
 
-		generateTokenAndSetCookie(newUser._id, res);
+		const accessToken = generateAccessToken(newUser._id);
+		const refreshToken = generateRefreshToken(newUser._id);
+
+		newUser.refreshToken = refreshToken;
+
 		await newUser.save();
+		setAccessTokenCookie(accessToken, res);
+		setRefreshTokenCookie(refreshToken, res);
 
 		res.status(201).json({
 			success: true,
@@ -142,10 +148,13 @@ export async function login(req, res) {
 
 		const accessToken = generateAccessToken(user._id);
 		const refreshToken = generateRefreshToken(user._id);
+
 		user.refreshToken = refreshToken;
+
 		await user.save();
 
 		setAccessTokenCookie(accessToken, res);
+		setRefreshTokenCookie(refreshToken, res);
 
 		res.status(200).json({
 			success: true,
@@ -175,6 +184,7 @@ export async function login(req, res) {
 export async function logout(req, res) {
 	try {
 		res.clearCookie(ENV_VARS.COOKIE_ACCESS_TOKEN);
+		res.clearCookie("refreshToken");
 		res.status(200).json({ success: true, message: "Logged out successfully" });
 	} catch (error) {
 		console.log("Error in logout controller", error.message);
@@ -235,7 +245,7 @@ export async function refreshToken(req, res) {
 		const { token } = req.body;
 
 		if (!token) {
-			return res.status(401).json({ success: false, message: "Refresh token is required" });
+			return res.status(405).json({ success: false, message: "Refresh token is required" });
 		}
 
 		const decoded = jwt.verify(token, ENV_VARS.JWT_SECRET);
