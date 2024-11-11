@@ -1,6 +1,6 @@
 import { User } from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
-import { generateAccessToken, generateRefreshToken, setAccessTokenCookie } from "../utils/generateToken.js";
+import { generateAccessToken, generateRefreshToken, setRefreshTokenCookie } from "../utils/generateToken.js";
 import jwt from "jsonwebtoken";
 import { ENV_VARS } from "../config/envVars.js";
 
@@ -78,13 +78,14 @@ export async function signup(req, res) {
 			image,
 		});
 
-		await newUser.save();
 		const accessToken = generateAccessToken(newUser._id);
 		const refreshToken = generateRefreshToken(newUser._id);
+
 		newUser.refreshToken = refreshToken;
+
 		await newUser.save();
 
-		setAccessTokenCookie(accessToken, res);
+		setRefreshTokenCookie(refreshToken, res);
 
 		res.status(201).json({
 			success: true,
@@ -92,7 +93,7 @@ export async function signup(req, res) {
 				...newUser._doc,
 				password: "",
 			},
-			refreshToken,
+			accessToken: accessToken,
 		});
 	} catch (error) {
 		console.log("Error in signup controller", error.message);
@@ -148,17 +149,20 @@ export async function login(req, res) {
 
 		const accessToken = generateAccessToken(user._id);
 		const refreshToken = generateRefreshToken(user._id);
+
 		user.refreshToken = refreshToken;
+
 		await user.save();
 
-		setAccessTokenCookie(accessToken, res);
+		setRefreshTokenCookie(refreshToken, res);
 
 		res.status(200).json({
 			success: true,
 			user: {
 				...user._doc,
 				password: "",
-			}
+			},
+			accessToken: accessToken
 		});
 	} catch (error) {
 		console.log("Error in login controller", error.message);
@@ -175,12 +179,38 @@ export async function login(req, res) {
  *     responses:
  *       200:
  *         description: Logged out successfully
+ *       401:
+ *         description: Unauthorized - Invalid token
  *       500:
  *         description: Internal server error
  */
 export async function logout(req, res) {
 	try {
-		res.clearCookie(ENV_VARS.COOKIE_ACCESS_TOKEN);
+		// Get the access token from the Authorization header
+		const authHeader = req.headers.authorization;
+		const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+
+		if (!token) {
+			return res.status(401).json({ success: false, message: "Unauthorized - No Token Provided" });
+		}
+
+		// Verify the access token
+		const decoded = jwt.verify(token, ENV_VARS.JWT_SECRET);
+		const userId = decoded.userId;
+
+		// Find the user in the database
+		const user = await User.findById(userId);
+		if (!user) {
+			return res.status(401).json({ success: false, message: "Unauthorized - User not found" });
+		}
+
+		// Set the refresh token in the user document to null
+		user.refreshToken = null;
+		await user.save();
+
+		// Clear the refresh token cookie
+		res.clearCookie("refreshToken");
+
 		res.status(200).json({ success: true, message: "Logged out successfully" });
 	} catch (error) {
 		console.log("Error in logout controller", error.message);
@@ -238,7 +268,8 @@ export async function authCheck(req, res) {
  */
 export async function refreshToken(req, res) {
 	try {
-		const { token } = req.body;
+		console.log(req.cookies);
+		const token = req.cookies.refreshToken;
 
 		if (!token) {
 			return res.status(401).json({ success: false, message: "Refresh token is required" });
@@ -252,8 +283,6 @@ export async function refreshToken(req, res) {
 		}
 
 		const newAccessToken = generateAccessToken(user._id);
-
-		setAccessTokenCookie(newAccessToken, res);
 
 		res.status(200).json({
 			success: true,
