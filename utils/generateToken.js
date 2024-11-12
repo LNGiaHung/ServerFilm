@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { ENV_VARS } from "../config/envVars.js";
 
 export const generateAccessToken = (userId) => {
-	return jwt.sign({ userId }, ENV_VARS.JWT_SECRET, { expiresIn: "10s" });
+	return jwt.sign({ userId }, ENV_VARS.JWT_SECRET, { expiresIn: "10m" });
 };
 
 export const generateRefreshToken = (userId) => {
@@ -10,10 +10,10 @@ export const generateRefreshToken = (userId) => {
 };
 
 export const setRefreshTokenCookie = (refreshToken, res) => {
-	res.cookie("refreshToken", refreshToken, { // Set the cookie name for the refresh token
-		maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days in MS
-		httpOnly: true, // prevent XSS attacks
-		sameSite: "None", // prevent CSRF attacks
-		secure: ENV_VARS.NODE_ENV !== "development", // Use secure cookies in production
+	res.cookie("refreshToken", refreshToken, {
+		httpOnly: true,
+		secure: ENV_VARS.NODE_ENV === "production", // Set to true in production for HTTPS
+		sameSite: ENV_VARS.NODE_ENV === "production" ? "None" : "Lax", // "None" for cross-origin in production
+		maxAge: 15 * 24 * 60 * 60 * 1000, // Example: 15 days in milliseconds
 	});
 };
